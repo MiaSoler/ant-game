@@ -11,6 +11,7 @@ public class Colony {
     private List<Ant> toRemove = new ArrayList<>();
 
     public int homeX, homeY;
+    public int deadAnts = 0;
 
     public Colony(int initialAnts, int homeX, int homeY) {
         this.homeX = homeX;
@@ -30,11 +31,19 @@ public class Colony {
     }
     //update grid with ant status
     public void update(Grid grid) {
-        for (Ant ant : ants) {
+        List<Ant> snapshot = new ArrayList<>(ants);
+
+        for (Ant ant : snapshot) {
             ant.update(grid, this);
         }
-
+        deadAnts += toRemove.size();
         ants.removeAll(toRemove);
         toRemove.clear();
+    }
+
+    public int countByState(AntState state) {
+        return (int) ants.stream()
+                .filter(a -> a.state == state)
+                .count();
     }
 }

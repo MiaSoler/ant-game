@@ -5,6 +5,7 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 
@@ -15,9 +16,17 @@ public class GameController {
     private Pane gamePane = new Pane();
 
     private Grid grid = new Grid(20, 20);
-    private Colony colony = new Colony(5, 10, 10);
+    private Colony colony;
 
     private final int CELL_SIZE = 30;
+    private Label statsLabel = new Label();
+    
+    public GameController(int initialAnts) {
+        this.colony = new Colony(initialAnts, 10, 10);
+
+        root.setTop(createLegend());
+        root.setCenter(gamePane);
+    }
 
     public BorderPane getRoot() {
         return root;
@@ -28,18 +37,20 @@ public class GameController {
         box.setStyle("-fx-fill: " + color + ";");
     
         Label label = new Label(text);
-    
+         
         HBox item = new HBox(5, box, label);
         return item;
     }
+    //create a legend to explain the cell colors
+    //add ant status
 
-    private HBox createLegend() {
+    private VBox createLegend() {
 
         HBox legend = new HBox(15);
         legend.setStyle("-fx-padding: 10; -fx-background-color: lightgray;");
     
         legend.getChildren().addAll(
-                new createLegendItem("Home", "brown"),
+                new Label(), createLegendItem("Home", "brown"),
                 createLegendItem("Food", "green"),
                 createLegendItem("Water", "blue"),
                 createLegendItem("Poison", "red"),
@@ -47,18 +58,50 @@ public class GameController {
                 createLegendItem("Carrying Food", "yellow"),
                 createLegendItem("Searching Water", "cyan")
         );
+
+            // second line (stats)
+        statsLabel.setStyle("-fx-padding: 5; -fx-font-size: 13px;");
+
+        VBox container = new VBox(legend, statsLabel);
+        return container;
+    }
+
+    private void updateStats() {
+
+        int alive = colony.ants.size();
+        int dead = colony.deadAnts;
     
-        return legend;
+        int searchingFood = colony.countByState(AntState.SEARCHING_FOOD);
+        int returning = colony.countByState(AntState.RETURNING_HOME);
+        int searchingWater = colony.countByState(AntState.SEARCHING_WATER);
+    
+        statsLabel.setText(
+                "Alive: " + alive +
+                " | Dead: " + dead +
+                " | Searching Food: " + searchingFood +
+                " | Returning Home: " + returning +
+                " | Searching Water: " + searchingWater
+        );
     }
 
     public void start() {
         root.setTop(createLegend());
         root.setCenter(gamePane);
+        //modify speed animation
         new AnimationTimer() {
+
+            private long lastUpdate = 0;
+            private final long INTERVAL = 200_000_000; // 200ms
+    
             @Override
             public void handle(long now) {
-                update();
-                render();
+    
+                if (now - lastUpdate >= INTERVAL) {
+                    update();
+                    updateStats(); 
+                    render();
+                    lastUpdate = now;
+                }
             }
         }.start();
     }
