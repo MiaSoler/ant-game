@@ -14,16 +14,16 @@ public class Grid {
         cells = new CellType[width][height];
         generate();
     }
-
+    //set cell with food, water and poison
     private void generate() {
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
 
-                int r = rand.nextInt(100);
+                int randomNumber = rand.nextInt(100);
 
-                if (r < 10) cells[x][y] = CellType.FOOD;
-                else if (r < 15) cells[x][y] = CellType.WATER;
-                else if (r < 18) cells[x][y] = CellType.POISON;
+                if (randomNumber < 10) cells[x][y] = CellType.FOOD;
+                else if (randomNumber < 15) cells[x][y] = CellType.WATER;
+                else if (randomNumber < 18) cells[x][y] = CellType.POISON;
                 else cells[x][y] = CellType.EMPTY;
             }
         }
