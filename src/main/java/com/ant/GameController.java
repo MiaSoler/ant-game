@@ -9,21 +9,29 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 
+// It connects the simulation logic (Grid + Colony) with the visual representation.
 public class GameController {
 
-    //to add the legend in the header
+    // Legend layout
     private BorderPane root = new BorderPane();
+
+    // Draw the grid and ants
     private Pane gamePane = new Pane();
 
+    // Simulation components
     private Grid grid = new Grid(20, 20);
     private Colony colony;
 
+    // Size of each cell in pixels
     private final int CELL_SIZE = 30;
+
+    // Label used to display live statistics
     private Label statsLabel = new Label();
     
     public GameController(int initialAnts) {
         this.colony = new Colony(initialAnts, 10, 10);
 
+        // Add legend (top) and game area (center)
         root.setTop(createLegend());
         root.setCenter(gamePane);
     }
@@ -31,26 +39,24 @@ public class GameController {
     public BorderPane getRoot() {
         return root;
     }
-
     private HBox createLegendItem(String text, String color) {
         Rectangle box = new Rectangle(15, 15);
         box.setStyle("-fx-fill: " + color + ";");
     
         Label label = new Label(text);
          
-        HBox item = new HBox(5, box, label);
-        return item;
+        return new HBox(5, box, label);
     }
-    //create a legend to explain the cell colors
-    //add ant status
 
     private VBox createLegend() {
 
         HBox legend = new HBox(15);
         legend.setStyle("-fx-padding: 10; -fx-background-color: lightgray;");
     
+        // First line: color legend
         legend.getChildren().addAll(
-                new Label(), createLegendItem("Home", "brown"),
+                new Label("Ant Simulation |"),
+                createLegendItem("Home", "brown"),
                 createLegendItem("Food", "green"),
                 createLegendItem("Water", "blue"),
                 createLegendItem("Poison", "red"),
@@ -59,12 +65,13 @@ public class GameController {
                 createLegendItem("Searching Water", "cyan")
         );
 
-            // second line (stats)
+        // Second line: statistics
         statsLabel.setStyle("-fx-padding: 5; -fx-font-size: 13px;");
 
-        VBox container = new VBox(legend, statsLabel);
-        return container;
+        return new VBox(legend, statsLabel);
     }
+
+    // Updates the statistics label with real-time data
 
     private void updateStats() {
 
@@ -76,7 +83,7 @@ public class GameController {
         int searchingWater = colony.countByState(AntState.SEARCHING_WATER);
     
         statsLabel.setText(
-                "Alive: " + alive +
+                "Alive: " + alive + "/2000" +
                 " | Dead: " + dead +
                 " | Searching Food: " + searchingFood +
                 " | Returning Home: " + returning +
@@ -84,18 +91,24 @@ public class GameController {
         );
     }
 
+    //  Updates simulation logic, statistics, renders the scene
     public void start() {
+
+        // Ensure layout is set
         root.setTop(createLegend());
         root.setCenter(gamePane);
-        //modify speed animation
+
         new AnimationTimer() {
 
             private long lastUpdate = 0;
-            private final long INTERVAL = 200_000_000; // 200ms
+
+            // Interval between updates 
+            private final long INTERVAL = 200_000_000;
     
             @Override
             public void handle(long now) {
-    
+
+                // Only update when interval is reached
                 if (now - lastUpdate >= INTERVAL) {
                     update();
                     updateStats(); 
@@ -106,14 +119,18 @@ public class GameController {
         }.start();
     }
 
+    // Updates the simulation logic
     private void update() {
         colony.update(grid);
     }
 
+    // Renders the grid and ants on screen.
     private void render() {
+
+        // Clear previous frame
         gamePane.getChildren().clear();
 
-        // draw grid
+        // Draw grid cells
         for (int celX = 0; celX < grid.width; celX++) {
             for (int celY = 0; celY < grid.height; celY++) {
 
@@ -124,37 +141,41 @@ public class GameController {
                     CELL_SIZE
                 );
 
+                // Set color based on cell type
                 switch (grid.cells[celX][celY]) {
                     case EMPTY -> rect.setFill(Color.BEIGE);
                     case FOOD -> rect.setFill(Color.GREEN);
                     case WATER -> rect.setFill(Color.BLUE);
                     case POISON -> rect.setFill(Color.RED);
-                    case HOME -> rect.setFill(Color.BROWN);
                 }
+
+                // Override color if this is the colony home
+                if (celX == colony.homeX && celY == colony.homeY) 
+                    rect.setFill(Color.BROWN);
 
                 rect.setStroke(Color.BLACK);
                 gamePane.getChildren().add(rect);
             }
         }
 
-        // draw ants
+        // Draw ants
         colony.ants.forEach(ant -> {
-            Rectangle a = new Rectangle(
+            Rectangle rectAnt = new Rectangle(
                     ant.posX * CELL_SIZE,
                     ant.posY * CELL_SIZE,
                     CELL_SIZE,
                     CELL_SIZE
             );
-            //ant color based on and state
-            if (ant.state == AntState.RETURNING_HOME)
-                a.setFill(Color.YELLOW);
-            else if (ant.state == AntState.SEARCHING_WATER)
-                a.setFill(Color.CYAN);
-            else
-                //ant looking for food
-                a.setFill(Color.BLACK);
 
-            gamePane.getChildren().add(a);
+            // Color depends on ant state
+            if (ant.state == AntState.RETURNING_HOME)
+                rectAnt.setFill(Color.YELLOW);        
+            else if (ant.state == AntState.SEARCHING_WATER)
+                rectAnt.setFill(Color.CYAN);          
+            else
+                rectAnt.setFill(Color.BLACK);         
+
+            gamePane.getChildren().add(rectAnt);
         });
     }
 }
